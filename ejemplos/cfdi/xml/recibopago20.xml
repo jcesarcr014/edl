@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" xsi:schemaLocation="http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd http://www.sat.gob.mx/Pagos20 http://www.sat.gob.mx/sitio_internet/cfd/Pagos/Pagos20.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="4.0" Serie="CFDIPAGO" Folio="1" Fecha="2025-08-25T10:29:59" Sello="tGFYWq52WRu677KIXk6ajbvRHu5226FCGevRJekkHfaQAGCbw7TBNuYzIoUXEtIHOlK6XlUZA8EXdKnWJucnY17mkgBnyck6ibrn+Y3J/+MEFEZB1Hn+q+fDw4kMWlrb8yY8X2CYUVh4QJ9rFnwvOzkPt/DiSORHaVjodTNIIMUJ1uVR4ruy+hdx9Ge4W95UJfiU3tkZ6+Es3be5xiPusB+WxH07dlpvUMBn2PxBJcH8w+QJfrK+jJNNSfHm61RpIbl0t862mghAvB6I54RwduPaL3qeEWMUtt2jSN4VGbZXrU5Yd4RZHnACXJtYQwt7Auku0DHJMYyp3/2EyAR/kA==" NoCertificado="30001000000500003416" Certificado="MIIFsDCCA5igAwIBAgIUMzAwMDEwMDAwMDA1MDAwMDM0MTYwDQYJKoZIhvcNAQELBQAwggErMQ8wDQYDVQQDDAZBQyBVQVQxLjAsBgNVBAoMJVNFUlZJQ0lPIERFIEFETUlOSVNUUkFDSU9OIFRSSUJVVEFSSUExGjAYBgNVBAsMEVNBVC1JRVMgQXV0aG9yaXR5MSgwJgYJKoZIhvcNAQkBFhlvc2Nhci5tYXJ0aW5lekBzYXQuZ29iLm14MR0wGwYDVQQJDBQzcmEgY2VycmFkYSBkZSBjYWxpejEOMAwGA1UEEQwFMDYzNzAxCzAJBgNVBAYTAk1YMRkwFwYDVQQIDBBDSVVEQUQgREUgTUVYSUNPMREwDwYDVQQHDAhDT1lPQUNBTjERMA8GA1UELRMIMi41LjQuNDUxJTAjBgkqhkiG9w0BCQITFnJlc3BvbnNhYmxlOiBBQ0RNQS1TQVQwHhcNMjMwNTE4MTE0MzUxWhcNMjcwNTE4MTE0MzUxWjCB1zEnMCUGA1UEAxMeRVNDVUVMQSBLRU1QRVIgVVJHQVRFIFNBIERFIENWMScwJQYDVQQpEx5FU0NVRUxBIEtFTVBFUiBVUkdBVEUgU0EgREUgQ1YxJzAlBgNVBAoTHkVTQ1VFTEEgS0VNUEVSIFVSR0FURSBTQSBERSBDVjElMCMGA1UELRMcRUtVOTAwMzE3M0M5IC8gVkFEQTgwMDkyN0RKMzEeMBwGA1UEBRMVIC8gVkFEQTgwMDkyN0hTUlNSTDA1MRMwEQYDVQQLEwpTdWN1cnNhbCAxMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtmecO6n2GS0zL025gbHGQVxznPDICoXzR2uUngz4DqxVUC/w9cE6FxSiXm2ap8Gcjg7wmcZfm85EBaxCx/0J2u5CqnhzIoGCdhBPuhWQnIh5TLgj/X6uNquwZkKChbNe9aeFirU/JbyN7Egia9oKH9KZUsodiM/pWAH00PCtoKJ9OBcSHMq8Rqa3KKoBcfkg1ZrgueffwRLws9yOcRWLb02sDOPzGIm/jEFicVYt2Hw1qdRE5xmTZ7AGG0UHs+unkGjpCVeJ+BEBn0JPLWVvDKHZAQMj6s5Bku35+d/MyATkpOPsGT/VTnsouxekDfikJD1f7A1ZpJbqDpkJnss3vQIDAQABox0wGzAMBgNVHRMBAf8EAjAAMAsGA1UdDwQEAwIGwDANBgkqhkiG9w0BAQsFAAOCAgEAFaUgj5PqgvJigNMgtrdXZnbPfVBbukAbW4OGnUhNrA7SRAAfv2BSGk16PI0nBOr7qF2mItmBnjgEwk+DTv8Zr7w5qp7vleC6dIsZFNJoa6ZndrE/f7KO1CYruLXr5gwEkIyGfJ9NwyIagvHHMszzyHiSZIA850fWtbqtythpAliJ2jF35M5pNS+YTkRB+T6L/c6m00ymN3q9lT1rB03YywxrLreRSFZOSrbwWfg34EJbHfbFXpCSVYdJRfiVdvHnewN0r5fUlPtR9stQHyuqewzdkyb5jTTw02D2cUfL57vlPStBj7SEi3uOWvLrsiDnnCIxRMYJ2UA2ktDKHk+zWnsDmaeleSzonv2CHW42yXYPCvWi88oE1DJNYLNkIjua7MxAnkNZbScNw01A6zbLsZ3y8G6eEYnxSTRfwjd8EP4kdiHNJftm7Z4iRU7HOVh79/lRWB+gd171s3d/mI9kte3MRy6V8MMEMCAnMboGpaooYwgAmwclI2XZCczNWXfhaWe0ZS5PmytD/GDpXzkX0oEgY9K/uYo5V77NdZbGAjmyi8cE2B2ogvyaN2XfIInrZPgEffJ4AB7kFA2mwesdLOCh0BLD9itmCve3A1FGR4+stO2ANUoiI3w3Tv2yQSg4bjeDlJ08lXaaFCLW2peEXMXjQUk7fmpb5MNuOUTW6BE=" SubTotal="0" Moneda="XXX" Total="0" TipoDeComprobante="P" Exportacion="01" LugarExpedicion="06850" xmlns:pago20="http://www.sat.gob.mx/Pagos20">
+  <cfdi:Emisor Rfc="EKU9003173C9" Nombre="ESCUELA KEMPER URGATE SA DE CV" RegimenFiscal="601"/>
+  <cfdi:Receptor Rfc="AAAD770905441" Nombre="DARIO ALVAREZ ARANDA" DomicilioFiscalReceptor="07300" RegimenFiscalReceptor="612" UsoCFDI="CP01"/>
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="84111506" Cantidad="1" ClaveUnidad="ACT" Descripcion="Pago" ValorUnitario="0" Importe="0" ObjetoImp="01"/>
+  </cfdi:Conceptos>
+  <cfdi:Complemento>
+    <pago20:Pagos Version="2.0">
+      <pago20:Totales TotalRetencionesIVA="0.00" TotalRetencionesISR="0.00" TotalRetencionesIEPS="0.00" TotalTrasladosBaseIVA16="1000.00" TotalTrasladosImpuestoIVA16="160.00" TotalTrasladosBaseIVA8="0.00" TotalTrasladosImpuestoIVA8="0.00" TotalTrasladosBaseIVA0="0.00" TotalTrasladosImpuestoIVA0="0.00" TotalTrasladosBaseIVAExento="0.00" MontoTotalPagos="1160.00"/>
+      <pago20:Pago FechaPago="2025-08-25T10:29:59" FormaDePagoP="01" MonedaP="MXN" TipoCambioP="1.00" Monto="1160.00" NumOperacion="2018081540014 TCT0000494330700" RfcEmisorCtaOrd="AAA010101AAA" NomBancoOrdExt="Santander" CtaOrdenante="015680644065416681" RfcEmisorCtaBen="AAA010101AAA" CtaBeneficiario="021190030551700271" TipoCadPago="01" CertPago="UjBsR09EbGhjZ0dTQUxNQUFBUUNBRU1tQ1p0dU1GUXhEUzhi" CadPago="||01|15082018|15082018|112654|40021|SANTANDER|ORDENANTE|40|015680644065416681|AAA010101AAA|HSBC|BENEFICIARIO|40|021190030551700271|AAA010101AAA|CONCEPTO|0.00|1000.00|00001000000307075918||" SelloPago="UjBsR09EbGhjZ0dTQUxNQUFBUUNBRU1tQ1p0dU1GUXhEUzhi">
+        <pago20:DoctoRelacionado IdDocumento="222172B4-7330-4F3A-9E1A-B3FA29E20184" Serie="F" Folio="1968" MonedaDR="MXN" EquivalenciaDR="1.00" NumParcialidad="1" ImpSaldoAnt="1160.00" ImpPagado="1160.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="01">
+          <pago20:ImpuestosDR>
+            <pago20:RetencionesDR>
+              <pago20:RetencionDR BaseDR="1000.00" ImpuestoDR="001" TipoFactorDR="Tasa" TasaOCuotaDR="0.16" ImporteDR="160.00"/>
+            </pago20:RetencionesDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="1000.00" ImpuestoDR="001" TipoFactorDR="Tasa" TasaOCuotaDR="0.16" ImporteDR="160.00"/>
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:ImpuestosP>
+          <pago20:RetencionesP>
+            <pago20:RetencionP ImpuestoP="001" ImporteP="160.00"/>
+          </pago20:RetencionesP>
+          <pago20:TrasladosP>
+            <pago20:TrasladoP BaseP="1000.00" ImpuestoP="001" TipoFactorP="Tasa" TasaOCuotaP="0.16" ImporteP="160.00"/>
+          </pago20:TrasladosP>
+        </pago20:ImpuestosP>
+      </pago20:Pago>
+    </pago20:Pagos>
+  </cfdi:Complemento>
+</cfdi:Comprobante>
