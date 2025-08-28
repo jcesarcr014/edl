@@ -184,7 +184,8 @@ try {
             'xml' => base64_encode($xml) // Devolvemos el XML en Base64
         ]);
     } else {
-        throw new Exception('Error del PAC: ' . $parameters->Information->Error);
+        $errorDetails = is_string($parameters->Information->Error) ? $parameters->Information->Error : json_encode($parameters->Information->Error, JSON_PRETTY_PRINT);
+throw new Exception('Error del PAC: ' . $errorDetails);
     }
 
 } catch (\Exception $e) {
