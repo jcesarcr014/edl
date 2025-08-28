@@ -32,6 +32,7 @@ use Facturando\ElectronicDocumentLibrary\Document\ElectronicDocument;
 
 
 $token = getBearerToken();
+
 if ($token !== SECRET_API_TOKEN) {
     http_response_code(401);
     echo json_encode(['error' => 'Acceso no autorizado.']);
