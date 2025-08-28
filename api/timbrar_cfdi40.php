@@ -1,4 +1,9 @@
 <?php
+
+// ---- INICIO: CÓDIGO DE DEPURACIÓN ----
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 // api/timbrar_cfdi40.php
 
 header('Content-Type: application/json');
