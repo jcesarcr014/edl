@@ -21,8 +21,8 @@ require_once __DIR__ . '/security.php';
 // Requerimos el autoload de composer para tener acceso a las clases de la librería
 require_once __DIR__ . '/../vendor/autoload.php';
 // Requerimos las clases de Utils que provee el ejemplo de la librería
-require_once __DIR__ . '/../../Utils/Utils.php'; // Ajusta la ruta si es necesario
-require_once __DIR__ . '/../../Data/Constants.php'; // Para las credenciales del integrador
+require_once __DIR__ . '/../ejemplos/Utils/Utils.php'; 
+require_once __DIR__ . '/../ejemplos/Data/Constants.php'; 
 
 // --- Namespaces de la librería EDL ---
 use Facturando\Ecodex\Proveedor;
