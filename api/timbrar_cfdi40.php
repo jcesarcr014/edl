@@ -116,6 +116,7 @@ try {
         $concepto->ClaveProductoServicio->Value = $conceptoData['claveProdServ'];
         $concepto->Cantidad->Value = $conceptoData['cantidad'];
         $concepto->ClaveUnidad->Value = $conceptoData['claveUnidad'];
+        $concepto->Unidad->Value = $conceptoData['unidad'];
         $concepto->Descripcion->Value = $conceptoData['descripcion'];
         $concepto->ValorUnitario->Value = $conceptoData['valorUnitario'];
         $concepto->Importe->Value = round($conceptoData['cantidad'] * $conceptoData['valorUnitario'], 2);
@@ -166,7 +167,7 @@ try {
     $parameters = new Parameters();
     $parameters->Rfc = Constants::RFC_INTEGRADOR;
     $parameters->Usuario = Constants::ID_INTEGRADOR;
-    $parameters->IdTransaccion = time(); // ID de transacción único
+    $parameters->IdTransaccion = PHP_INT_MAX; // ID de transacción único
     $parameters->ElectronicDocument = $electronicDocument;
 
     $ecodex = new Proveedor();
