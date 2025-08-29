@@ -139,7 +139,6 @@ try {
         // ... (Añadir lógica para retenciones del concepto si es necesario)
     }
 
-    // Totales e Impuestos Globales
     $totalesData = $data['totales'];
     $electronicDocument->Data->SubTotal->Value = $totalesData['subtotal'];
     if (isset($totalesData['descuento']) && $totalesData['descuento'] > 0) {
@@ -147,39 +146,47 @@ try {
     }
     $electronicDocument->Data->Total->Value = $totalesData['total'];
     
+    // --- MANEJO DE IMPUESTOS GLOBALES (VERSIÓN REVISADA Y ROBUSTA) ---
+
+    // 1. Establecer los atributos de totales en el nodo <cfdi:Impuestos>
+    // Si no hay traslados, no establecemos el total para evitar crear el nodo innecesariamente
     if (isset($totalesData['totalImpuestosTrasladados']) && $totalesData['totalImpuestosTrasladados'] > 0) {
         $electronicDocument->Data->Impuestos->TotalTraslados->Value = $totalesData['totalImpuestosTrasladados'];
     }
-    // ... (Añadir lógica para retenciones globales si es necesario)
-/*
+    
+    // El atributo de retenciones SÍ debe aparecer si es 0.00, si hay retenciones.
+    if (isset($totalesData['totalImpuestosRetenidos'])) {
+        $electronicDocument->Data->Impuestos->TotalRetenciones->Value = $totalesData['totalImpuestosRetenidos'];
+    }
+    
+    // 2. Llenar el DESGLOSE dentro del nodo <cfdi:Impuestos>
+
+    // Llenar el nodo <cfdi:Traslados>
     if (isset($data['impuestosGlobales']['traslados'])) {
         foreach($data['impuestosGlobales']['traslados'] as $imp) {
             $trasladoGlobal = $electronicDocument->Data->Impuestos->Traslados->add();
-            $trasladoGlobal->Base->Value = $imp['base'];
-            $trasladoGlobal->Tipo->Value = $imp['impuesto']; // OJO: Es 'Tipo' en el nodo global, no 'Impuesto'
+            // Basado en el XML del ejemplo, usamos 'Impuesto' y 'Base'
+            $trasladoGlobal->Impuesto->Value = $imp['impuesto']; 
             $trasladoGlobal->TipoFactor->Value = $imp['tipoFactor'];
             $trasladoGlobal->TasaCuota->Value = $imp['tasaCuota'];
             $trasladoGlobal->Importe->Value = $imp['importe'];
+            if (isset($imp['base'])) { // Añadimos la base para que coincida con el ejemplo
+                $trasladoGlobal->Base->Value = $imp['base'];
+            }
         }
     }
-*/
 
-    // =================== INICIO: BLOQUE DE DEPURACIÓN XML ESTO ES DE PRUEBA ===================
+    // Llenar el nodo <cfdi:Retenciones>
+    if (isset($data['impuestosGlobales']['retenciones'])) {
+        foreach($data['impuestosGlobales']['retenciones'] as $imp) {
+            $retencionGlobal = $electronicDocument->Data->Impuestos->Retenciones->add();
+            // El desglose de retención solo lleva Impuesto e Importe
+            $retencionGlobal->Impuesto->Value = $imp['impuesto'];
+            $retencionGlobal->Importe->Value = $imp['importe'];
+        }
+    }
+
     
-    // Desactivamos validaciones para asegurar que genere el string sin importar errores menores
-    $electronicDocument->Manage->Save->Options->Validations = false;
-
-    // Generamos el XML en una variable
-    $electronicDocument->saveToString($xmlGenerado);
-
-    // Devolvemos este XML para poder analizarlo
-    header('Content-Type: application/xml'); // Cambiamos el header para verlo bonito
-    echo $xmlGenerado;
-
-    // Detenemos la ejecución aquí para NO intentar timbrar
-    exit();
-
-    // =================== FIN: BLOQUE DE DEPURACIÓN XML ===================
 
     // --- 2.4. Llamada al Servicio de Timbrado ---
     $parameters = new Parameters();
