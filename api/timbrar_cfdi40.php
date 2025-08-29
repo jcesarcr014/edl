@@ -165,12 +165,12 @@ try {
     if (isset($data['impuestosGlobales']['traslados'])) {
         foreach($data['impuestosGlobales']['traslados'] as $imp) {
             $trasladoGlobal = $electronicDocument->Data->Impuestos->Traslados->add();
-            // Basado en el XML del ejemplo, usamos 'Impuesto' y 'Base'
-            $trasladoGlobal->Impuesto->Value = $imp['impuesto']; 
+            // CORRECCIÓN FINAL: El objeto PHP usa 'Tipo', no 'Impuesto' para el nodo global.
+            $trasladoGlobal->Tipo->Value = $imp['impuesto']; 
             $trasladoGlobal->TipoFactor->Value = $imp['tipoFactor'];
             $trasladoGlobal->TasaCuota->Value = $imp['tasaCuota'];
             $trasladoGlobal->Importe->Value = $imp['importe'];
-            if (isset($imp['base'])) { // Añadimos la base para que coincida con el ejemplo
+            if (isset($imp['base'])) { // La 'Base' no es estándar en el traslado global, pero la librería parece usarla
                 $trasladoGlobal->Base->Value = $imp['base'];
             }
         }
@@ -180,8 +180,8 @@ try {
     if (isset($data['impuestosGlobales']['retenciones'])) {
         foreach($data['impuestosGlobales']['retenciones'] as $imp) {
             $retencionGlobal = $electronicDocument->Data->Impuestos->Retenciones->add();
-            // El desglose de retención solo lleva Impuesto e Importe
-            $retencionGlobal->Impuesto->Value = $imp['impuesto'];
+            // CORRECCIÓN FINAL: El objeto PHP usa 'Tipo', no 'Impuesto' para el nodo global.
+            $retencionGlobal->Tipo->Value = $imp['impuesto'];
             $retencionGlobal->Importe->Value = $imp['importe'];
         }
     }
