@@ -37,6 +37,28 @@ $electronicDocument->Manage->Save->Certificate = $certificate;
 // Cargamos los datos del comprobantes
 Cfdi40::CargarDatosTimbrado($electronicDocument);
 
+
+// =================== INICIO: BLOQUE DE DEPURACIÓN XML ===================
+
+// Desactivamos validaciones
+$electronicDocument->Manage->Save->Options->Validations = false;
+
+// Generamos el XML en una variable
+$electronicDocument->saveToString($xmlDelEjemplo);
+
+// Imprimimos el XML en pantalla y detenemos el script
+header('Content-Type: application/xml');
+echo $xmlDelEjemplo;
+exit();
+
+// =================== FIN: BLOQUE DE DEPURACIÓN XML ===================
+
+
+
+
+
+
+
 /** @var Parameters $parameters */
 $parameters = new Parameters();
 

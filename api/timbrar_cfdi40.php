@@ -163,6 +163,24 @@ try {
         }
     }
 */
+
+    // =================== INICIO: BLOQUE DE DEPURACIÓN XML ESTO ES DE PRUEBA ===================
+    
+    // Desactivamos validaciones para asegurar que genere el string sin importar errores menores
+    $electronicDocument->Manage->Save->Options->Validations = false;
+
+    // Generamos el XML en una variable
+    $electronicDocument->saveToString($xmlGenerado);
+
+    // Devolvemos este XML para poder analizarlo
+    header('Content-Type: application/xml'); // Cambiamos el header para verlo bonito
+    echo $xmlGenerado;
+
+    // Detenemos la ejecución aquí para NO intentar timbrar
+    exit();
+
+    // =================== FIN: BLOQUE DE DEPURACIÓN XML ===================
+
     // --- 2.4. Llamada al Servicio de Timbrado ---
     $parameters = new Parameters();
     $parameters->Rfc = Constants::RFC_INTEGRADOR;
