@@ -22,7 +22,7 @@ use Facturando\ElectronicDocumentLibrary\Certificate\ElectronicCertificate;
 use Facturando\ElectronicDocumentLibrary\Document\ElectronicDocument;
 
 // Mostramos la versión de la librería
-Html::showVersion(ElectronicDocument::Version());
+//Html::showVersion(ElectronicDocument::Version());
 
 // Creamos el objeto ELECTRONICDOCUMENT que es el que contiene los datos
 $electronicDocument = new ElectronicDocument();
