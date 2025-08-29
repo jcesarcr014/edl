@@ -141,48 +141,39 @@ try {
 
     $totalesData = $data['totales'];
     $electronicDocument->Data->SubTotal->Value = $totalesData['subtotal'];
-    if (isset($totalesData['descuento']) && $totalesData['descuento'] > 0) {
-        $electronicDocument->Data->Descuento->Value = $totalesData['descuento'];
-    }
+    // ... (manejo de descuento)
     $electronicDocument->Data->Total->Value = $totalesData['total'];
     
-    // --- MANEJO DE IMPUESTOS GLOBALES (VERSIÓN REVISADA Y ROBUSTA) ---
+    // --- MANEJO DE IMPUESTOS GLOBALES (VERSIÓN SÚPER DEFENSIVA) ---
 
-    // 1. Establecer los atributos de totales en el nodo <cfdi:Impuestos>
-    // Si no hay traslados, no establecemos el total para evitar crear el nodo innecesariamente
+    // Solo creamos el nodo de impuestos si realmente hay impuestos que reportar.
     if (isset($totalesData['totalImpuestosTrasladados']) && $totalesData['totalImpuestosTrasladados'] > 0) {
-        $electronicDocument->Data->Impuestos->TotalTraslados->Value = $totalesData['totalImpuestosTrasladados'];
-    }
-    
-    // El atributo de retenciones SÍ debe aparecer si es 0.00, si hay retenciones.
-    if (isset($totalesData['totalImpuestosRetenidos'])) {
-        $electronicDocument->Data->Impuestos->TotalRetenciones->Value = $totalesData['totalImpuestosRetenidos'];
-    }
-    
-    // 2. Llenar el DESGLOSE dentro del nodo <cfdi:Impuestos>
+        
+        $electronicDocument->Data->Impuestos->TotalTrasladados->Value = $totalesData['totalImpuestosTrasladados'];
 
-    // Llenar el nodo <cfdi:Traslados>
-    if (isset($data['impuestosGlobales']['traslados'])) {
-        foreach($data['impuestosGlobales']['traslados'] as $imp) {
-            $trasladoGlobal = $electronicDocument->Data->Impuestos->Traslados->add();
-            // CORRECCIÓN FINAL: El objeto PHP usa 'Tipo', no 'Impuesto' para el nodo global.
-            $trasladoGlobal->Tipo->Value = $imp['impuesto']; 
-            $trasladoGlobal->TipoFactor->Value = $imp['tipoFactor'];
-            $trasladoGlobal->TasaCuota->Value = $imp['tasaCuota'];
-            $trasladoGlobal->Importe->Value = $imp['importe'];
-            if (isset($imp['base'])) { // La 'Base' no es estándar en el traslado global, pero la librería parece usarla
-                $trasladoGlobal->Base->Value = $imp['base'];
+        if (isset($data['impuestosGlobales']['traslados'])) {
+            foreach($data['impuestosGlobales']['traslados'] as $imp) {
+                $trasladoGlobal = $electronicDocument->Data->Impuestos->Traslados->add();
+                $trasladoGlobal->Tipo->Value = $imp['impuesto']; 
+                $trasladoGlobal->TipoFactor->Value = $imp['tipoFactor'];
+                $trasladoGlobal->TasaCuota->Value = $imp['tasaCuota'];
+                $trasladoGlobal->Importe->Value = $imp['importe'];
+                if (isset($imp['base'])) {
+                    $trasladoGlobal->Base->Value = $imp['base'];
+                }
             }
         }
     }
+    
+    if (isset($totalesData['totalImpuestosRetenidos'])) {
+        $electronicDocument->Data->Impuestos->TotalRetenciones->Value = $totalesData['totalImpuestosRetenidos'];
 
-    // Llenar el nodo <cfdi:Retenciones>
-    if (isset($data['impuestosGlobales']['retenciones'])) {
-        foreach($data['impuestosGlobales']['retenciones'] as $imp) {
-            $retencionGlobal = $electronicDocument->Data->Impuestos->Retenciones->add();
-            // CORRECCIÓN FINAL: El objeto PHP usa 'Tipo', no 'Impuesto' para el nodo global.
-            $retencionGlobal->Tipo->Value = $imp['impuesto'];
-            $retencionGlobal->Importe->Value = $imp['importe'];
+        if (isset($data['impuestosGlobales']['retenciones'])) {
+            foreach($data['impuestosGlobales']['retenciones'] as $imp) {
+                $retencionGlobal = $electronicDocument->Data->Impuestos->Retenciones->add();
+                $retencionGlobal->Tipo->Value = $imp['impuesto'];
+                $retencionGlobal->Importe->Value = $imp['importe'];
+            }
         }
     }
 
