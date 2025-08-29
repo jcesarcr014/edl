@@ -151,7 +151,7 @@ try {
         $electronicDocument->Data->Impuestos->TotalTraslados->Value = $totalesData['totalImpuestosTrasladados'];
     }
     // ... (Añadir lógica para retenciones globales si es necesario)
-
+/*
     if (isset($data['impuestosGlobales']['traslados'])) {
         foreach($data['impuestosGlobales']['traslados'] as $imp) {
             $trasladoGlobal = $electronicDocument->Data->Impuestos->Traslados->add();
@@ -162,7 +162,7 @@ try {
             $trasladoGlobal->Importe->Value = $imp['importe'];
         }
     }
-
+*/
     // --- 2.4. Llamada al Servicio de Timbrado ---
     $parameters = new Parameters();
     $parameters->Rfc = Constants::RFC_INTEGRADOR;
