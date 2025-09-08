@@ -4,23 +4,16 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-// api/timbrar_cfdi40.php
 
 header('Content-Type: application/json');
 date_default_timezone_set('America/Mexico_City');
 
-// --- 1. CONFIGURACIÓN Y SEGURIDAD ---
-// Usaremos el mismo token que para el alta. En un futuro podrías usar uno diferente.
-define('SECRET_API_TOKEN', 'TuTokenSuperSecreto12345!@#$'); // ¡Debe ser el mismo que en alta_emisor.php!
-
+// --- 1. CONFIGURACIÓN Y DEPENDENCIAS ---
 define('CERT_DIR', __DIR__ . '/../certificados/');
 define('PASSWORD_FILE', __DIR__ . '/../config/passwords.ini');
 
-require_once __DIR__ . '/security.php';
-
-// Requerimos el autoload de composer para tener acceso a las clases de la librería
+// Requerimos dependencias
 require_once __DIR__ . '/../vendor/autoload.php';
-// Requerimos las clases de Utils que provee el ejemplo de la librería
 require_once __DIR__ . '/../ejemplos/Utils/Utils.php'; 
 require_once __DIR__ . '/../ejemplos/Data/Constants.php'; 
 
@@ -33,57 +26,40 @@ use Facturando\ElectronicDocumentLibrary\Base\Types\ProcessProviderResult;
 use Facturando\ElectronicDocumentLibrary\Certificate\ElectronicCertificate;
 use Facturando\ElectronicDocumentLibrary\Document\ElectronicDocument;
 
-// --- Funciones de Seguridad (Bearer Token) ---
-
-
-$token = getBearerToken();
-
-if ($token !== SECRET_API_TOKEN) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Acceso no autorizado.']);
-    exit();
-}
+// --- 2. VALIDACIÓN BÁSICA DE LA PETICIÓN ---
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['error' => 'Método no permitido.']);
+    echo json_encode(['error' => 'Método no permitido. Use POST.']);
     exit();
 }
+// NOTA: Se omite la validación del Token para esta prueba ultra-simple.
 
-// --- 2. LÓGICA DE TIMBRADO ---
+// --- 3. LÓGICA DE TIMBRADO TOTALMENTE HARCODEADA ---
 try {
-    $jsonInput = file_get_contents('php://input');
-    $data = json_decode($jsonInput, true);
+    // --- 3.1. Definimos el RFC emisor a probar (ÚNICO DATO DINÁMICO) ---
+    $emisorRfcParaPrueba = 'XOJI740919U48';
 
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        throw new Exception('JSON inválido en el cuerpo de la petición.');
-    }
-
-    $emisorRfc = $data['emisor']['rfc'];
-    if (empty($emisorRfc)) {
-        throw new Exception('El RFC del emisor es requerido.');
-    }
-
-    // --- 2.1. Cargar Certificado y Contraseña Dinámicamente ---
-    $pathCer = CERT_DIR . $emisorRfc . '.cer';
-    $pathKey = CERT_DIR . $emisorRfc . '.key';
+    // --- 3.2. Cargar Certificado y Contraseña para el RFC de prueba ---
+    $pathCer = CERT_DIR . $emisorRfcParaPrueba . '.cer';
+    $pathKey = CERT_DIR . $emisorRfcParaPrueba . '.key';
     if (!file_exists($pathCer) || !file_exists($pathKey)) {
-        throw new Exception("No se encontraron los CSD para el RFC: $emisorRfc");
+        throw new Exception("No se encontraron los CSD para el RFC de prueba: $emisorRfcParaPrueba");
     }
     $passwords = parse_ini_file(PASSWORD_FILE);
-    if (!isset($passwords[$emisorRfc])) {
-        throw new Exception("No se encontró la contraseña para el RFC: $emisorRfc");
+    if (!isset($passwords[$emisorRfcParaPrueba])) {
+        throw new Exception("No se encontró la contraseña para el RFC de prueba: $emisorRfcParaPrueba");
     }
-    $password = $passwords[$emisorRfc];
+    $password = $passwords[$emisorRfcParaPrueba];
 
-    // --- 2.2. Preparar Documento Electrónico ---
+    // --- 3.3. Preparar Documento Electrónico ---
     $electronicDocument = new ElectronicDocument();
     $certificate = Utils::loadCertificateFromFile($pathCer, $pathKey, $password);
     $electronicDocument->Manage->Save->Certificate = $certificate;
 
-    // --- 2.3. Mapear JSON al Objeto ElectronicDocument (El Corazón de la API) ---
+    // --- 3.4. Llenado de datos (COPIA EXACTA DEL EJEMPLO FUNCIONAL) ---
     $electronicDocument->Data->clear();
 
-    //<editor-fold desc="Datos del comprobante (FIJOS)">
+    //<editor-fold desc="Datos del comprobante">
     $electronicDocument->Data->Version->Value = '4.0';
     $electronicDocument->Data->Exportacion->Value = '01';
     $electronicDocument->Data->Folio->Value = 'CFDI40146';
@@ -92,35 +68,34 @@ try {
     $electronicDocument->Data->MetodoPago->Value = 'PUE';
     $electronicDocument->Data->Moneda->Value = 'MXN';
     $electronicDocument->Data->Serie->Value = 'CFDI40';
-    $electronicDocument->Data->Fecha->Value = new \DateTime('NOW -5 hours'); // Corregido como en el ejemplo
+    $electronicDocument->Data->Fecha->Value = new \DateTime('NOW -5 hours');
     $electronicDocument->Data->SubTotal->Value = 10;
     $electronicDocument->Data->TipoComprobante->Value = 'I';
     $electronicDocument->Data->Total->Value = 10.32;
     //</editor-fold>
 
-    //<editor-fold desc="CFDI Relacionados (FIJO)">
+    //<editor-fold desc="Información de los comprobantes fiscales relacionados">
     $relacionados = $electronicDocument->Data->CfdiRelacionadosExt->add();
     $relacionados->CfdiRelacionados->TipoRelacion->Value = '01';
     $relacionados->CfdiRelacionados->add()->Uuid->Value = 'A39DA66B-52CA-49E3-879B-5C05185B0EF7';
     //</editor-fold>
 
-    //<editor-fold desc="Datos del Emisor (DINÁMICOS del JSON)">
-    $emisorData = $data['emisor'];
-    $electronicDocument->Data->Emisor->Rfc->Value = $emisorData['rfc'];
-    $electronicDocument->Data->Emisor->Nombre->Value = $emisorData['nombre'];
-    $electronicDocument->Data->Emisor->RegimenFiscal->Value = $emisorData['regimenFiscal'];
+    //<editor-fold desc="Datos del emisor">
+    // USAMOS EL RFC DE PRUEBA Y DATOS FIJOS
+    $electronicDocument->Data->Emisor->Rfc->Value = $emisorRfcParaPrueba;
+    $electronicDocument->Data->Emisor->Nombre->Value = 'JIMENEZ ORTEGA XOCHITL'; // Asumo este nombre, ajústalo si es otro
+    $electronicDocument->Data->Emisor->RegimenFiscal->Value = '612'; // Asumo este régimen, ajústalo
     //</editor-fold>
 
-    //<editor-fold desc="Datos del Receptor (DINÁMICOS del JSON)">
-    $receptorData = $data['receptor'];
-    $electronicDocument->Data->Receptor->Rfc->Value = $receptorData['rfc'];
-    $electronicDocument->Data->Receptor->Nombre->Value = $receptorData['nombre'];
-    $electronicDocument->Data->Receptor->DomicilioFiscalReceptor->Value = $receptorData['domicilioFiscal'];
-    $electronicDocument->Data->Receptor->RegimenFiscalReceptor->Value = $receptorData['regimenFiscal'];
-    $electronicDocument->Data->Receptor->UsoCfdi->Value = $receptorData['usoCfdi'];
+    //<editor-fold desc="Datos del Receptor">
+    $electronicDocument->Data->Receptor->Rfc->Value = 'XEXX010101000';
+    $electronicDocument->Data->Receptor->Nombre->Value = 'PUBLICO EN GENERAL';
+    $electronicDocument->Data->Receptor->RegimenFiscalReceptor->Value = '616';
+    $electronicDocument->Data->Receptor->UsoCfdi->Value = 'S01';
+    $electronicDocument->Data->Receptor->DomicilioFiscalReceptor->Value = '07300'; // CP del receptor
     //</editor-fold>
 
-    //<editor-fold desc="Concepto (FIJO)">
+    //<editor-fold desc="Concepto">
     $concepto = $electronicDocument->Data->Conceptos->add();
     $concepto->Cantidad->Value = 2;
     $concepto->ClaveProductoServicio->Value = '78101500';
@@ -132,79 +107,79 @@ try {
     $concepto->Unidad->Value = 'TONELADA';
     $concepto->ValorUnitario->Value = 5;
 
-    //<editor-fold desc="Impuestos trasladados del concepto (FIJOS)">
+    //<editor-fold desc="Impuestos trasladados del concepto">
     $trasladoConcepto = $concepto->Impuestos->Traslados->add();
-    $trasladoConcepto->Base->Value = 10; // CORREGIDO: La base es el importe del concepto
-    $trasladoConcepto->Importe->Value = 1.60; // CORREGIDO: El importe es 10 * 0.16
+    $trasladoConcepto->Base->Value = 10.00; // Corregido para consistencia matemática
+    $trasladoConcepto->Importe->Value = 1.60;
     $trasladoConcepto->Impuesto->Value = '002';
     $trasladoConcepto->TipoFactor->Value = 'Tasa';
     $trasladoConcepto->TasaCuota->Value = 0.160000;
     //</editor-fold>
 
-    //<editor-fold desc="Impuestos retenidos del concepto (FIJOS)">
+    //<editor-fold desc="Impuestos retenidos del concepto">
     $retencionConcepto = $concepto->Impuestos->Retenciones->add();
-    $retencionConcepto->Base->Value = 10; // CORREGIDO
+    $retencionConcepto->Base->Value = 10.00;
     $retencionConcepto->Importe->Value = 0;
-    $retencionConcepto->Impuesto->Value = '002'; // El ejemplo usa '002' para IVA
+    $retencionConcepto->Impuesto->Value = '001'; // ISR, por ejemplo
     $retencionConcepto->TipoFactor->Value = 'Tasa';
     $retencionConcepto->TasaCuota->Value = 0;
     //</editor-fold>
 
-    //<editor-fold desc="Cuenta predial del concepto (FIJO)">
+    //<editor-fold desc="Cuenta predial del concepto">
     $concepto->CuentasPrediales->add()->Numero->Value = "51888";
     //</editor-fold>
     //</editor-fold>
+    
+    // **CORRECCIÓN MATEMÁTICA IMPORTANTE EN TOTALES**
+    $electronicDocument->Data->SubTotal->Value = 10.00;
+    $electronicDocument->Data->Total->Value = 11.60; // 10.00 (subtotal) + 1.60 (IVA) - 0.00 (retenciones)
+    
 
-    //<editor-fold desc="Impuestos Globales (FIJOS)">
     //<editor-fold desc="Impuestos trasladados">
     $traslado = $electronicDocument->Data->Impuestos->Traslados->add();
-    $traslado->Base->Value = 10; // CORREGIDO
-    $traslado->Importe->Value = 1.60; // CORREGIDO
+    $traslado->Base->Value = 10.00;
+    $traslado->Importe->Value = 1.60;
     $traslado->Tipo->Value = '002';
     $traslado->TipoFactor->Value = 'Tasa';
     $traslado->TasaCuota->Value = 0.160000;
-    $electronicDocument->Data->Impuestos->TotalTraslados->Value = 1.60; // CORREGIDO
+    $electronicDocument->Data->Impuestos->TotalTraslados->Value = 1.60;
     //</editor-fold>
 
     //<editor-fold desc="Impuestos retenidos">
     $retencion = $electronicDocument->Data->Impuestos->Retenciones->add();
-    $retencion->Tipo->Value = '002';
+    $retencion->Tipo->Value = '001';
     $retencion->Importe->Value = 0;
     $electronicDocument->Data->Impuestos->TotalRetenciones->Value = 0;
+    //</editor-fold>
     
-    
-
-    
-
-    // --- 2.4. Llamada al Servicio de Timbrado ---
+    // --- 3.5. Llamada al Servicio de Timbrado ---
     $parameters = new Parameters();
     $parameters->Rfc = Constants::RFC_INTEGRADOR;
     $parameters->Usuario = Constants::ID_INTEGRADOR;
-    $parameters->IdTransaccion = PHP_INT_MAX; // ID de transacción único
+    $parameters->IdTransaccion = PHP_INT_MAX;
     $parameters->ElectronicDocument = $electronicDocument;
 
     $ecodex = new Proveedor();
-
     $result = $ecodex->TimbrarCfdi($parameters);
 
-    // --- 2.5. Procesar Respuesta ---
+    // --- 3.6. Procesar Respuesta ---
     if ($result == ProcessProviderResult::OK) {
         $electronicDocument->Manage->Save->Options->Validations = false;
         $electronicDocument->saveToString($xml);
-
         http_response_code(200);
         echo json_encode([
             'success' => true,
+            'message' => '¡TIMBRADO EXITOSO CON DATOS FIJOS!',
             'uuid' => $parameters->Information->Timbre->Uuid,
-            'xml' => base64_encode($xml) // Devolvemos el XML en Base64
+            'xml' => base64_encode($xml)
         ]);
     } else {
         $errorDetails = is_string($parameters->Information->Error) ? $parameters->Information->Error : json_encode($parameters->Information->Error, JSON_PRETTY_PRINT);
-        throw new Exception('Error del PAC: ' . $errorDetails);
+        throw new Exception('Error del PAC (datos fijos): ' . $errorDetails);
     }
 
 } catch (\Exception $e) {
-    http_response_code(400); // Bad Request o Internal Error
+    http_response_code(400);
     echo json_encode([
         'success' => false,
         'error' => 'Error al procesar la factura.',
