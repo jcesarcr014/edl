@@ -81,91 +81,96 @@ try {
     $electronicDocument->Manage->Save->Certificate = $certificate;
 
     // --- 2.3. Mapear JSON al Objeto ElectronicDocument (El Corazón de la API) ---
-    $comprobanteData = $data['comprobante'];
     $electronicDocument->Data->clear();
+
+    //<editor-fold desc="Datos del comprobante (FIJOS)">
     $electronicDocument->Data->Version->Value = '4.0';
     $electronicDocument->Data->Exportacion->Value = '01';
-    //$electronicDocument->Data->Serie->Value = $comprobanteData['serie'];
     $electronicDocument->Data->Folio->Value = 'CFDI40146';
     $electronicDocument->Data->FormaPago->Value = '01';
     $electronicDocument->Data->LugarExpedicion->Value = '89400';
     $electronicDocument->Data->MetodoPago->Value = 'PUE';
     $electronicDocument->Data->Moneda->Value = 'MXN';
     $electronicDocument->Data->Serie->Value = 'CFDI40';
-    $electronicDocument->Data->Fecha->Value = new \DateTime();
+    $electronicDocument->Data->Fecha->Value = new \DateTime('NOW -5 hours'); // Corregido como en el ejemplo
+    $electronicDocument->Data->SubTotal->Value = 10;
     $electronicDocument->Data->TipoComprobante->Value = 'I';
-    $electronicDocument->Data->Exportacion->Value = '01'; // Ajusta si es necesario
+    $electronicDocument->Data->Total->Value = 10.32;
+    //</editor-fold>
 
+    //<editor-fold desc="CFDI Relacionados (FIJO)">
+    $relacionados = $electronicDocument->Data->CfdiRelacionadosExt->add();
+    $relacionados->CfdiRelacionados->TipoRelacion->Value = '01';
+    $relacionados->CfdiRelacionados->add()->Uuid->Value = 'A39DA66B-52CA-49E3-879B-5C05185B0EF7';
+    //</editor-fold>
 
-    // Emisor
+    //<editor-fold desc="Datos del Emisor (DINÁMICOS del JSON)">
     $emisorData = $data['emisor'];
     $electronicDocument->Data->Emisor->Rfc->Value = $emisorData['rfc'];
     $electronicDocument->Data->Emisor->Nombre->Value = $emisorData['nombre'];
     $electronicDocument->Data->Emisor->RegimenFiscal->Value = $emisorData['regimenFiscal'];
+    //</editor-fold>
 
-    // Receptor
+    //<editor-fold desc="Datos del Receptor (DINÁMICOS del JSON)">
     $receptorData = $data['receptor'];
     $electronicDocument->Data->Receptor->Rfc->Value = $receptorData['rfc'];
     $electronicDocument->Data->Receptor->Nombre->Value = $receptorData['nombre'];
     $electronicDocument->Data->Receptor->DomicilioFiscalReceptor->Value = $receptorData['domicilioFiscal'];
     $electronicDocument->Data->Receptor->RegimenFiscalReceptor->Value = $receptorData['regimenFiscal'];
     $electronicDocument->Data->Receptor->UsoCfdi->Value = $receptorData['usoCfdi'];
+    //</editor-fold>
 
-    // Conceptos
-    foreach ($data['conceptos'] as $conceptoData) {
-        $concepto = $electronicDocument->Data->Conceptos->add();
-        $concepto->Cantidad->Value = $conceptoData['cantidad'];
-        $concepto->ClaveProductoServicio->Value = $conceptoData['claveProdServ'];
-        $concepto->ClaveUnidad->Value = $conceptoData['claveUnidad'];
-        $concepto->Descripcion->Value = $conceptoData['descripcion'];
-        $concepto->Importe->Value = round($conceptoData['cantidad'] * $conceptoData['valorUnitario'], 2);
-        $concepto->NumeroIdentificacion->Value = '00001';
-        $concepto->ObjetoImpuesto->Value = '02';
-        $concepto->Unidad->Value = $conceptoData['unidad'];
-        $concepto->ValorUnitario->Value = $conceptoData['valorUnitario'];
+    //<editor-fold desc="Concepto (FIJO)">
+    $concepto = $electronicDocument->Data->Conceptos->add();
+    $concepto->Cantidad->Value = 2;
+    $concepto->ClaveProductoServicio->Value = '78101500';
+    $concepto->ClaveUnidad->Value = 'CMT';
+    $concepto->Descripcion->Value = 'ACERO';
+    $concepto->Importe->Value = 10;
+    $concepto->NumeroIdentificacion->Value = '00001';
+    $concepto->ObjetoImpuesto->Value = '02';
+    $concepto->Unidad->Value = 'TONELADA';
+    $concepto->ValorUnitario->Value = 5;
 
-        $trasladoConcepto = $concepto->Impuestos->Traslados->add();
-        $trasladoConcepto->Base->Value = 2;
-        $trasladoConcepto->Importe->Value = 0.32;
-        $trasladoConcepto->Impuesto->Value = '002';
-        $trasladoConcepto->TipoFactor->Value = 'Tasa';
-        $trasladoConcepto->TasaCuota->Value = 0.160000;
-        
-        $retencionConcepto = $concepto->Impuestos->Retenciones->add();
-        $retencionConcepto->Base->Value = 2;
-        $retencionConcepto->Importe->Value = 0;
-        $retencionConcepto->Impuesto->Value = '002';
-        $retencionConcepto->TipoFactor->Value = 'Tasa';
-        $retencionConcepto->TasaCuota->Value = 0;
+    //<editor-fold desc="Impuestos trasladados del concepto (FIJOS)">
+    $trasladoConcepto = $concepto->Impuestos->Traslados->add();
+    $trasladoConcepto->Base->Value = 10; // CORREGIDO: La base es el importe del concepto
+    $trasladoConcepto->Importe->Value = 1.60; // CORREGIDO: El importe es 10 * 0.16
+    $trasladoConcepto->Impuesto->Value = '002';
+    $trasladoConcepto->TipoFactor->Value = 'Tasa';
+    $trasladoConcepto->TasaCuota->Value = 0.160000;
+    //</editor-fold>
 
-        $concepto->CuentasPrediales->add()->Numero->Value = "51888";
-        // Impuestos del Concepto
-        
-        
-       
-    }
+    //<editor-fold desc="Impuestos retenidos del concepto (FIJOS)">
+    $retencionConcepto = $concepto->Impuestos->Retenciones->add();
+    $retencionConcepto->Base->Value = 10; // CORREGIDO
+    $retencionConcepto->Importe->Value = 0;
+    $retencionConcepto->Impuesto->Value = '002'; // El ejemplo usa '002' para IVA
+    $retencionConcepto->TipoFactor->Value = 'Tasa';
+    $retencionConcepto->TasaCuota->Value = 0;
+    //</editor-fold>
 
+    //<editor-fold desc="Cuenta predial del concepto (FIJO)">
+    $concepto->CuentasPrediales->add()->Numero->Value = "51888";
+    //</editor-fold>
+    //</editor-fold>
+
+    //<editor-fold desc="Impuestos Globales (FIJOS)">
+    //<editor-fold desc="Impuestos trasladados">
     $traslado = $electronicDocument->Data->Impuestos->Traslados->add();
-    $traslado->Base->Value = 2;
-    $traslado->Importe->Value = 0.32;
+    $traslado->Base->Value = 10; // CORREGIDO
+    $traslado->Importe->Value = 1.60; // CORREGIDO
     $traslado->Tipo->Value = '002';
     $traslado->TipoFactor->Value = 'Tasa';
     $traslado->TasaCuota->Value = 0.160000;
-    
-    $electronicDocument->Data->Impuestos->TotalTraslados->Value = 0.32;
-    
+    $electronicDocument->Data->Impuestos->TotalTraslados->Value = 1.60; // CORREGIDO
+    //</editor-fold>
+
+    //<editor-fold desc="Impuestos retenidos">
     $retencion = $electronicDocument->Data->Impuestos->Retenciones->add();
     $retencion->Tipo->Value = '002';
     $retencion->Importe->Value = 0;
-
     $electronicDocument->Data->Impuestos->TotalRetenciones->Value = 0;
-
-
-
-    
-    $totalesData = $data['totales'];
-    $electronicDocument->Data->SubTotal->Value = $totalesData['subtotal'];
-    $electronicDocument->Data->Total->Value = $totalesData['total'];
     
     
 
