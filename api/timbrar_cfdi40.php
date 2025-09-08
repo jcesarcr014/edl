@@ -1,6 +1,6 @@
 <?php
 
-// ---- INICIO: CÓDIGO DE DEPURACIÓN ----
+// ---- INICIO: CÓDIGO DE DEPURACIÓN (Déjalo por ahora, quítalo al pasar a producción) ----
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -9,6 +9,11 @@ header('Content-Type: application/json');
 date_default_timezone_set('America/Mexico_City');
 
 // --- 1. CONFIGURACIÓN Y DEPENDENCIAS ---
+define('SECRET_API_TOKEN', 'TuTokenSuperSecreto12345!@#$');
+define('CERT_DIR', __DIR__ . '/../certificados/');
+define('PASSWORD_FILE', __DIR__ . '/../config/passwords.ini');
+
+require_once __DIR__ . '/security.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../ejemplos/Utils/Utils.php'; 
 require_once __DIR__ . '/../ejemplos/Data/Constants.php'; 
@@ -22,88 +27,137 @@ use Facturando\ElectronicDocumentLibrary\Base\Types\ProcessProviderResult;
 use Facturando\ElectronicDocumentLibrary\Certificate\ElectronicCertificate;
 use Facturando\ElectronicDocumentLibrary\Document\ElectronicDocument;
 
-// --- 2. VALIDACIÓN BÁSICA DE LA PETICIÓN ---
+// --- 2. VALIDACIÓN DE LA PETICIÓN ---
+$token = getBearerToken();
+if ($token !== SECRET_API_TOKEN) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Acceso no autorizado.']);
+    exit();
+}
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['error' => 'Método no permitido. Use POST.']);
+    echo json_encode(['error' => 'Método no permitido.']);
     exit();
 }
 
-// --- 3. PRUEBA TOTALMENTE FIJA (IGNORANDO TODO LO DINÁMICO) ---
+// --- 3. LÓGICA DE TIMBRADO DINÁMICO ---
 try {
-    
-    // --- 3.1. Usamos el CSD y la contraseña FIJOS del ejemplo que SÍ funciona ---
-    $pathCer = __DIR__ . '/../certificados/EKU9003173C9.cer';
-    $pathKey = __DIR__ . '/../certificados/EKU9003173C9.key';
-    $password = '12345678a'; // Contraseña del CSD de prueba
+    $jsonInput = file_get_contents('php://input');
+    $data = json_decode($jsonInput, true);
 
-    // Asegúrate de que este CSD de prueba exista en tu carpeta de certificados
-    if (!file_exists($pathCer) || !file_exists($pathKey)) {
-        throw new Exception("El CSD de prueba EKU9003173C9 no se encontró en la carpeta /certificados.");
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        throw new Exception('JSON inválido en el cuerpo de la petición.');
     }
 
-    // --- 3.2. Preparar Documento Electrónico ---
+    $emisorRfc = $data['emisor']['rfc'];
+    if (empty($emisorRfc)) {
+        throw new Exception('El RFC del emisor es requerido.');
+    }
+
+    // Carga de Certificado Dinámico
+    $pathCer = CERT_DIR . $emisorRfc . '.cer';
+    $pathKey = CERT_DIR . $emisorRfc . '.key';
+    if (!file_exists($pathCer) || !file_exists($pathKey)) {
+        throw new Exception("No se encontraron los CSD para el RFC: $emisorRfc");
+    }
+    $passwords = parse_ini_file(PASSWORD_FILE);
+    if (!isset($passwords[$emisorRfc])) {
+        throw new Exception("No se encontró la contraseña para el RFC: $emisorRfc");
+    }
+    $password = $passwords[$emisorRfc];
+
+    // Preparar Documento Electrónico
     $electronicDocument = new ElectronicDocument();
     $certificate = Utils::loadCertificateFromFile($pathCer, $pathKey, $password);
     $electronicDocument->Manage->Save->Certificate = $certificate;
 
-    // --- 3.3. Llenado de datos (COPIA 1:1 DEL EJEMPLO FUNCIONAL) ---
+    // --- Mapeo del JSON al Objeto ---
     $electronicDocument->Data->clear();
 
+    // Comprobante
+    $comprobanteData = $data['comprobante'];
     $electronicDocument->Data->Version->Value = '4.0';
-    $electronicDocument->Data->Exportacion->Value = '01';
-    $electronicDocument->Data->Folio->Value = 'CFDI40146';
-    $electronicDocument->Data->FormaPago->Value = '01';
-    $electronicDocument->Data->LugarExpedicion->Value = '89400';
-    $electronicDocument->Data->MetodoPago->Value = 'PUE';
-    $electronicDocument->Data->Moneda->Value = 'MXN';
-    $electronicDocument->Data->Serie->Value = 'CFDI40';
+    $electronicDocument->Data->Serie->Value = $comprobanteData['serie'];
+    $electronicDocument->Data->Folio->Value = $comprobanteData['folio'];
     $electronicDocument->Data->Fecha->Value = new \DateTime('NOW -5 hours');
-    $electronicDocument->Data->SubTotal->Value = 10;
+    $electronicDocument->Data->FormaPago->Value = $comprobanteData['formaPago'];
+    $electronicDocument->Data->MetodoPago->Value = $comprobanteData['metodoPago'];
+    $electronicDocument->Data->Moneda->Value = $comprobanteData['moneda'];
+    $electronicDocument->Data->Exportacion->Value = $comprobanteData['exportacion'];
+    $electronicDocument->Data->LugarExpedicion->Value = $comprobanteData['lugarExpedicion'];
     $electronicDocument->Data->TipoComprobante->Value = 'I';
-    $electronicDocument->Data->Total->Value = 10.32;
+    if(isset($comprobanteData['condicionesPago'])) {
+        $electronicDocument->Data->CondicionesPago->Value = $comprobanteData['condicionesPago'];
+    }
 
-    $electronicDocument->Data->Emisor->Rfc->Value = 'EKU9003173C9';
-    $electronicDocument->Data->Emisor->Nombre->Value = 'ESCUELA KEMPER URGATE SA DE CV';
-    $electronicDocument->Data->Emisor->RegimenFiscal->Value = '601';
+    // Emisor
+    $emisorData = $data['emisor'];
+    $electronicDocument->Data->Emisor->Rfc->Value = $emisorData['rfc'];
+    $electronicDocument->Data->Emisor->Nombre->Value = $emisorData['nombre'];
+    $electronicDocument->Data->Emisor->RegimenFiscal->Value = $emisorData['regimenFiscal'];
 
-    $electronicDocument->Data->Receptor->Rfc->Value = 'AAAD770905441';
-    $electronicDocument->Data->Receptor->Nombre->Value = 'DARIO ALVAREZ ARANDA';
-    $electronicDocument->Data->Receptor->RegimenFiscalReceptor->Value = '612';
-    $electronicDocument->Data->Receptor->UsoCfdi->Value = 'G03';
-    $electronicDocument->Data->Receptor->DomicilioFiscalReceptor->Value = '07300';
-    
-    $concepto = $electronicDocument->Data->Conceptos->add();
-    $concepto->Cantidad->Value = 2;
-    $concepto->ClaveProductoServicio->Value = '78101500';
-    $concepto->ClaveUnidad->Value = 'CMT';
-    $concepto->Descripcion->Value = 'ACERO';
-    $concepto->Importe->Value = 10;
-    $concepto->NumeroIdentificacion->Value = '00001';
-    $concepto->ObjetoImpuesto->Value = '02';
-    $concepto->Unidad->Value = 'TONELADA';
-    $concepto->ValorUnitario->Value = 5;
+    // Receptor
+    $receptorData = $data['receptor'];
+    $electronicDocument->Data->Receptor->Rfc->Value = $receptorData['rfc'];
+    $electronicDocument->Data->Receptor->Nombre->Value = $receptorData['nombre'];
+    $electronicDocument->Data->Receptor->DomicilioFiscalReceptor->Value = $receptorData['domicilioFiscal'];
+    $electronicDocument->Data->Receptor->RegimenFiscalReceptor->Value = $receptorData['regimenFiscal'];
+    $electronicDocument->Data->Receptor->UsoCfdi->Value = $receptorData['usoCfdi'];
 
-    $trasladoConcepto = $concepto->Impuestos->Traslados->add();
-    $trasladoConcepto->Base->Value = 10.00;
-    $trasladoConcepto->Importe->Value = 1.60;
-    $trasladoConcepto->Impuesto->Value = '002';
-    $trasladoConcepto->TipoFactor->Value = 'Tasa';
-    $trasladoConcepto->TasaCuota->Value = 0.160000;
+    // Conceptos
+    foreach ($data['conceptos'] as $conceptoData) {
+        $concepto = $electronicDocument->Data->Conceptos->add();
+        $concepto->ClaveProductoServicio->Value = $conceptoData['claveProdServ'];
+        $concepto->NoIdentificacion->Value = $conceptoData['noIdentificacion'];
+        $concepto->Cantidad->Value = $conceptoData['cantidad'];
+        $concepto->ClaveUnidad->Value = $conceptoData['claveUnidad'];
+        $concepto->Unidad->Value = $conceptoData['unidad'];
+        $concepto->Descripcion->Value = $conceptoData['descripcion'];
+        $concepto->ValorUnitario->Value = $conceptoData['valorUnitario'];
+        $concepto->Importe->Value = round($conceptoData['cantidad'] * $conceptoData['valorUnitario'], 2);
+        $concepto->ObjetoImpuesto->Value = $conceptoData['objetoImp'];
 
-    $electronicDocument->Data->Total->Value = 11.60; // Ajuste matemático
+        // Impuestos del Concepto
+        if (isset($conceptoData['impuestos']['traslados'])) {
+            foreach ($conceptoData['impuestos']['traslados'] as $imp) {
+                $traslado = $concepto->Impuestos->Traslados->add();
+                $traslado->Base->Value = $imp['base'];
+                $traslado->Impuesto->Value = $imp['impuesto'];
+                $traslado->TipoFactor->Value = $imp['tipoFactor'];
+                $traslado->TasaCuota->Value = $imp['tasaCuota'];
+                $traslado->Importe->Value = $imp['importe'];
+            }
+        }
+        // Añadir lógica para retenciones de concepto si es necesario
+    }
 
-    $traslado = $electronicDocument->Data->Impuestos->Traslados->add();
-    $traslado->Base->Value = 10.00;
-    $traslado->Importe->Value = 1.60;
-    $traslado->Tipo->Value = '002';
-    $traslado->TipoFactor->Value = 'Tasa';
-    $traslado->TasaCuota->Value = 0.160000;
-    $electronicDocument->Data->Impuestos->TotalTraslados->Value = 1.60;
+    // Totales e Impuestos Globales
+    $totalesData = $data['totales'];
+    $electronicDocument->Data->SubTotal->Value = $totalesData['subtotal'];
+    $electronicDocument->Data->Total->Value = $totalesData['total'];
 
-    $electronicDocument->Data->Impuestos->TotalRetenciones->Value = 0;
-    
-    // --- 3.4. Llamada al Servicio de Timbrado ---
+    if (isset($totalesData['totalImpuestosTrasladados'])) {
+        $electronicDocument->Data->Impuestos->TotalTraslados->Value = $totalesData['totalImpuestosTrasladados'];
+    }
+    if (isset($totalesData['totalImpuestosRetenidos'])) {
+        $electronicDocument->Data->Impuestos->TotalRetenciones->Value = $totalesData['totalImpuestosRetenidos'];
+    }
+
+    if (isset($data['impuestosGlobales']['traslados'])) {
+        foreach($data['impuestosGlobales']['traslados'] as $imp) {
+            $trasladoGlobal = $electronicDocument->Data->Impuestos->Traslados->add();
+            $trasladoGlobal->Tipo->Value = $imp['impuesto'];
+            $trasladoGlobal->TipoFactor->Value = $imp['tipoFactor'];
+            $trasladoGlobal->TasaCuota->Value = $imp['tasaCuota'];
+            $trasladoGlobal->Importe->Value = $imp['importe'];
+            if (isset($imp['base'])) {
+                $trasladoGlobal->Base->Value = $imp['base'];
+            }
+        }
+    }
+    // Añadir lógica para retenciones globales si es necesario
+
+    // Llamada al Servicio de Timbrado
     $parameters = new Parameters();
     $parameters->Rfc = Constants::RFC_INTEGRADOR;
     $parameters->Usuario = Constants::ID_INTEGRADOR;
@@ -113,20 +167,19 @@ try {
     $ecodex = new Proveedor();
     $result = $ecodex->TimbrarCfdi($parameters);
 
-    // --- 3.5. Procesar Respuesta ---
+    // Procesar Respuesta
     if ($result == ProcessProviderResult::OK) {
         $electronicDocument->Manage->Save->Options->Validations = false;
         $electronicDocument->saveToString($xml);
         http_response_code(200);
         echo json_encode([
             'success' => true,
-            'message' => '¡PRUEBA DEFINITIVA EXITOSA!',
             'uuid' => $parameters->Information->Timbre->Uuid,
             'xml' => base64_encode($xml)
         ]);
     } else {
         $errorDetails = is_string($parameters->Information->Error) ? $parameters->Information->Error : json_encode($parameters->Information->Error, JSON_PRETTY_PRINT);
-        throw new Exception('Prueba definitiva falló. Error del PAC: ' . $errorDetails);
+        throw new Exception('Error del PAC: ' . $errorDetails);
     }
 
 } catch (\Exception $e) {
