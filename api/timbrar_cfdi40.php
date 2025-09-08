@@ -108,7 +108,7 @@ try {
     foreach ($data['conceptos'] as $conceptoData) {
         $concepto = $electronicDocument->Data->Conceptos->add();
         $concepto->ClaveProductoServicio->Value = $conceptoData['claveProdServ'];
-        $concepto->NoIdentificacion->Value = $conceptoData['noIdentificacion'];
+        $concepto->NumeroIdentificacion->Value = $conceptoData['noIdentificacion'];
         $concepto->Cantidad->Value = $conceptoData['cantidad'];
         $concepto->ClaveUnidad->Value = $conceptoData['claveUnidad'];
         $concepto->Unidad->Value = $conceptoData['unidad'];
