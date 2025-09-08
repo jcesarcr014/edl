@@ -175,7 +175,7 @@ try {
     $parameters = new Parameters();
     $parameters->Rfc = Constants::RFC_INTEGRADOR;
     $parameters->Usuario = Constants::ID_INTEGRADOR;
-    dd($parameters);
+   
     $parameters->IdTransaccion = PHP_INT_MAX; // ID de transacción único
     $parameters->ElectronicDocument = $electronicDocument;
 
