@@ -175,11 +175,11 @@ try {
     $parameters = new Parameters();
     $parameters->Rfc = Constants::RFC_INTEGRADOR;
     $parameters->Usuario = Constants::ID_INTEGRADOR;
-   
     $parameters->IdTransaccion = PHP_INT_MAX; // ID de transacción único
     $parameters->ElectronicDocument = $electronicDocument;
 
     $ecodex = new Proveedor();
+
     $result = $ecodex->TimbrarCfdi($parameters);
 
     // --- 2.5. Procesar Respuesta ---
@@ -195,7 +195,7 @@ try {
         ]);
     } else {
         $errorDetails = is_string($parameters->Information->Error) ? $parameters->Information->Error : json_encode($parameters->Information->Error, JSON_PRETTY_PRINT);
-throw new Exception('Error del PAC: ' . $errorDetails);
+        throw new Exception('Error del PAC: ' . $errorDetails);
     }
 
 } catch (\Exception $e) {
