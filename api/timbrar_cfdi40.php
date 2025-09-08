@@ -90,6 +90,16 @@ try {
         $electronicDocument->Data->CondicionesPago->Value = $comprobanteData['condicionesPago'];
     }
 
+    if (isset($data['cfdiRelacionados'])) {
+        foreach ($data['cfdiRelacionados'] as $rel) {
+            $relacionados = $electronicDocument->Data->CfdiRelacionadosExt->add();
+            $relacionados->CfdiRelacionados->TipoRelacion->Value = $rel['tipoRelacion'];
+            foreach ($rel['uuids'] as $uuid) {
+                $relacionados->CfdiRelacionados->add()->Uuid->Value = $uuid;
+            }
+        }
+    }
+
     // Emisor
     $emisorData = $data['emisor'];
     $electronicDocument->Data->Emisor->Rfc->Value = $emisorData['rfc'];
@@ -117,15 +127,36 @@ try {
         $concepto->Importe->Value = round($conceptoData['cantidad'] * $conceptoData['valorUnitario'], 2);
         $concepto->ObjetoImpuesto->Value = $conceptoData['objetoImp'];
 
+        $tieneTraslados = isset($conceptoData['impuestos']['traslados']) && !empty($conceptoData['impuestos']['traslados']);
+        $tieneRetenciones = isset($conceptoData['impuestos']['retenciones']) && !empty($conceptoData['impuestos']['retenciones']);
         // Impuestos del Concepto
-        if (isset($conceptoData['impuestos']['traslados'])) {
-            foreach ($conceptoData['impuestos']['traslados'] as $imp) {
-                $traslado = $concepto->Impuestos->Traslados->add();
-                $traslado->Base->Value = $imp['base'];
-                $traslado->Impuesto->Value = $imp['impuesto'];
-                $traslado->TipoFactor->Value = $imp['tipoFactor'];
-                $traslado->TasaCuota->Value = $imp['tasaCuota'];
-                $traslado->Importe->Value = $imp['importe'];
+        if ($tieneTraslados || $tieneRetenciones) {
+            // Procesamos los traslados si existen
+            if ($tieneTraslados) {
+                foreach ($conceptoData['impuestos']['traslados'] as $imp) {
+                    $traslado = $concepto->Impuestos->Traslados->add();
+                    $traslado->Base->Value = $imp['base'];
+                    $traslado->Impuesto->Value = $imp['impuesto'];
+                    $traslado->TipoFactor->Value = $imp['tipoFactor'];
+                    $traslado->TasaCuota->Value = $imp['tasaCuota'];
+                    $traslado->Importe->Value = $imp['importe'];
+                }
+            }
+            // Procesamos las retenciones si existen
+            if ($tieneRetenciones) {
+                foreach ($conceptoData['impuestos']['retenciones'] as $imp) {
+                    $retencion = $concepto->Impuestos->Retenciones->add();
+                    $retencion->Base->Value = $imp['base'];
+                    $retencion->Impuesto->Value = $imp['impuesto'];
+                    $retencion->TipoFactor->Value = $imp['tipoFactor'];
+                    $retencion->TasaCuota->Value = $imp['tasaCuota'];
+                    $retencion->Importe->Value = $imp['importe'];
+                }
+            } else if ($tieneTraslados) {
+                // <-- BLINDADO: Si hubo traslados pero no retenciones, añadimos un nodo de retención vacío
+                // para replicar el comportamiento del ejemplo funcional.
+                // Esta parte es opcional y se puede probar si lo demás falla. Por ahora la dejamos comentada.
+                // $concepto->Impuestos->Retenciones->add();
             }
         }
         // Añadir lógica para retenciones de concepto si es necesario
