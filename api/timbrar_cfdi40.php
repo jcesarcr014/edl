@@ -9,7 +9,7 @@ header('Content-Type: application/json');
 date_default_timezone_set('America/Mexico_City');
 
 // --- 1. CONFIGURACIÓN Y DEPENDENCIAS ---
-define('SECRET_API_TOKEN', 'TuTokenSuperSecreto12345!@#$');
+define('SECRET_API_TOKEN', 'TuTokenSuperSecreto12345!@');
 define('CERT_DIR', __DIR__ . '/../certificados/');
 define('PASSWORD_FILE', __DIR__ . '/../config/passwords.ini');
 

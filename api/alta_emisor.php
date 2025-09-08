@@ -6,7 +6,7 @@ header('Content-Type: application/json');
 
 // --- 2. Constantes de Configuración ---
 // ¡CAMBIA ESTE TOKEN POR UNO MUY SEGURO Y LARGO! Es la llave de tu API.
-define('SECRET_ADMIN_TOKEN', 'TuTokenSuperSecreto12345!@#$');
+define('SECRET_ADMIN_TOKEN', 'TuTokenSuperSecreto12345!@');
 
 // Definimos las rutas seguras usando __DIR__ para que siempre sean relativas al script
 define('CERT_DIR', __DIR__ . '/../certificados/');
