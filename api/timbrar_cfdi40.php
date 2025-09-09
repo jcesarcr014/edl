@@ -77,116 +77,78 @@ try {
     // Comprobante
     $comprobanteData = $data['comprobante'];
     $electronicDocument->Data->Version->Value = '4.0';
-    $electronicDocument->Data->Serie->Value = $comprobanteData['serie'];
-    $electronicDocument->Data->Folio->Value = $comprobanteData['folio'];
+    $electronicDocument->Data->Exportacion->Value = '01';
+    $electronicDocument->Data->Folio->Value = 'CFDI40146';
+    $electronicDocument->Data->FormaPago->Value = '01';
+    $electronicDocument->Data->LugarExpedicion->Value = '89400';
+    $electronicDocument->Data->MetodoPago->Value = 'PUE';
+    $electronicDocument->Data->Moneda->Value = 'MXN';
+    $electronicDocument->Data->Serie->Value = 'CFDI40';
     $electronicDocument->Data->Fecha->Value = new \DateTime('NOW -5 hours');
-    $electronicDocument->Data->FormaPago->Value = $comprobanteData['formaPago'];
-    $electronicDocument->Data->MetodoPago->Value = $comprobanteData['metodoPago'];
-    $electronicDocument->Data->Moneda->Value = $comprobanteData['moneda'];
-    $electronicDocument->Data->Exportacion->Value = $comprobanteData['exportacion'];
-    $electronicDocument->Data->LugarExpedicion->Value = $comprobanteData['lugarExpedicion'];
+    $electronicDocument->Data->SubTotal->Value = 10;
     $electronicDocument->Data->TipoComprobante->Value = 'I';
-    if(isset($comprobanteData['condicionesPago'])) {
-        $electronicDocument->Data->CondicionesPago->Value = $comprobanteData['condicionesPago'];
-    }
-
-    if (isset($data['cfdiRelacionados'])) {
-        foreach ($data['cfdiRelacionados'] as $rel) {
-            $relacionados = $electronicDocument->Data->CfdiRelacionadosExt->add();
-            $relacionados->CfdiRelacionados->TipoRelacion->Value = $rel['tipoRelacion'];
-            foreach ($rel['uuids'] as $uuid) {
-                $relacionados->CfdiRelacionados->add()->Uuid->Value = $uuid;
-            }
-        }
-    }
+    $electronicDocument->Data->Total->Value = 10.32;
+    $relacionados = $electronicDocument->Data->CfdiRelacionadosExt->add();
+    $relacionados->CfdiRelacionados->TipoRelacion->Value = '01';
+    $relacionados->CfdiRelacionados->add()->Uuid->Value = 'A39DA66B-52CA-49E3-879B-5C05185B0EF7';
 
     // Emisor
-    $emisorData = $data['emisor'];
-    $electronicDocument->Data->Emisor->Rfc->Value = $emisorData['rfc'];
-    $electronicDocument->Data->Emisor->Nombre->Value = $emisorData['nombre'];
-    $electronicDocument->Data->Emisor->RegimenFiscal->Value = $emisorData['regimenFiscal'];
+    $electronicDocument->Data->Emisor->Rfc->Value = 'EKU9003173C9';
+    $electronicDocument->Data->Emisor->Nombre->Value = 'ESCUELA KEMPER URGATE SA DE CV';
+    $electronicDocument->Data->Emisor->RegimenFiscal->Value = '601';
 
     // Receptor
-    $receptorData = $data['receptor'];
-    $electronicDocument->Data->Receptor->Rfc->Value = $receptorData['rfc'];
-    $electronicDocument->Data->Receptor->Nombre->Value = $receptorData['nombre'];
-    $electronicDocument->Data->Receptor->DomicilioFiscalReceptor->Value = $receptorData['domicilioFiscal'];
-    $electronicDocument->Data->Receptor->RegimenFiscalReceptor->Value = $receptorData['regimenFiscal'];
-    $electronicDocument->Data->Receptor->UsoCfdi->Value = $receptorData['usoCfdi'];
+    $electronicDocument->Data->Receptor->Rfc->Value = 'AAAD770905441';
+    $electronicDocument->Data->Receptor->Nombre->Value = 'DARIO ALVAREZ ARANDA';
+    $electronicDocument->Data->Receptor->RegimenFiscalReceptor->Value = '612';
+    $electronicDocument->Data->Receptor->UsoCfdi->Value = 'G03';
+    $electronicDocument->Data->Receptor->DomicilioFiscalReceptor->Value = '07300';
 
     // Conceptos
-    foreach ($data['conceptos'] as $conceptoData) {
-        $concepto = $electronicDocument->Data->Conceptos->add();
-        $concepto->ClaveProductoServicio->Value = $conceptoData['claveProdServ'];
-        $concepto->NumeroIdentificacion->Value = $conceptoData['noIdentificacion'];
-        $concepto->Cantidad->Value = $conceptoData['cantidad'];
-        $concepto->ClaveUnidad->Value = $conceptoData['claveUnidad'];
-        $concepto->Unidad->Value = $conceptoData['unidad'];
-        $concepto->Descripcion->Value = $conceptoData['descripcion'];
-        $concepto->ValorUnitario->Value = $conceptoData['valorUnitario'];
-        $concepto->Importe->Value = round($conceptoData['cantidad'] * $conceptoData['valorUnitario'], 2);
-        $concepto->ObjetoImpuesto->Value = $conceptoData['objetoImp'];
+    $concepto = $electronicDocument->Data->Conceptos->add();
+    $concepto->Cantidad->Value = 2;
+    $concepto->ClaveProductoServicio->Value = '78101500';
+    $concepto->ClaveUnidad->Value = 'CMT';
+    $concepto->Descripcion->Value = 'ACERO';
+    $concepto->Importe->Value = 10;
+    $concepto->NumeroIdentificacion->Value = '00001';
+    $concepto->ObjetoImpuesto->Value = '02';
+    $concepto->Unidad->Value = 'TONELADA';
+    $concepto->ValorUnitario->Value = 5;
 
-        $tieneTraslados = isset($conceptoData['impuestos']['traslados']) && !empty($conceptoData['impuestos']['traslados']);
-        $tieneRetenciones = isset($conceptoData['impuestos']['retenciones']) && !empty($conceptoData['impuestos']['retenciones']);
-        // Impuestos del Concepto
-        if ($tieneTraslados || $tieneRetenciones) {
-            // Procesamos los traslados si existen
-            if ($tieneTraslados) {
-                foreach ($conceptoData['impuestos']['traslados'] as $imp) {
-                    $traslado = $concepto->Impuestos->Traslados->add();
-                    $traslado->Base->Value = $imp['base'];
-                    $traslado->Impuesto->Value = $imp['impuesto'];
-                    $traslado->TipoFactor->Value = $imp['tipoFactor'];
-                    $traslado->TasaCuota->Value = $imp['tasaCuota'];
-                    $traslado->Importe->Value = $imp['importe'];
-                }
-            }
-            // Procesamos las retenciones si existen
-            if ($tieneRetenciones) {
-                foreach ($conceptoData['impuestos']['retenciones'] as $imp) {
-                    $retencion = $concepto->Impuestos->Retenciones->add();
-                    $retencion->Base->Value = $imp['base'];
-                    $retencion->Impuesto->Value = $imp['impuesto'];
-                    $retencion->TipoFactor->Value = $imp['tipoFactor'];
-                    $retencion->TasaCuota->Value = $imp['tasaCuota'];
-                    $retencion->Importe->Value = $imp['importe'];
-                }
-            } else if ($tieneTraslados) {
-                // <-- BLINDADO: Si hubo traslados pero no retenciones, añadimos un nodo de retención vacío
-                // para replicar el comportamiento del ejemplo funcional.
-                // Esta parte es opcional y se puede probar si lo demás falla. Por ahora la dejamos comentada.
-                // $concepto->Impuestos->Retenciones->add();
-            }
-        }
-        // Añadir lógica para retenciones de concepto si es necesario
-    }
+    $trasladoConcepto = $concepto->Impuestos->Traslados->add();
+    $trasladoConcepto->Base->Value = 2;
+    $trasladoConcepto->Importe->Value = 0.32;
+    $trasladoConcepto->Impuesto->Value = '002';
+    $trasladoConcepto->TipoFactor->Value = 'Tasa';
+    $trasladoConcepto->TasaCuota->Value = 0.160000;
 
+    $retencionConcepto = $concepto->Impuestos->Retenciones->add();
+    $retencionConcepto->Base->Value = 2;
+    $retencionConcepto->Importe->Value = 0;
+    $retencionConcepto->Impuesto->Value = '002';
+    $retencionConcepto->TipoFactor->Value = 'Tasa';
+    $retencionConcepto->TasaCuota->Value = 0;
+
+    $concepto->CuentasPrediales->add()->Numero->Value = "51888";
     // Totales e Impuestos Globales
-    $totalesData = $data['totales'];
-    $electronicDocument->Data->SubTotal->Value = $totalesData['subtotal'];
-    $electronicDocument->Data->Total->Value = $totalesData['total'];
+    
 
-    if (isset($totalesData['totalImpuestosTrasladados'])) {
-        $electronicDocument->Data->Impuestos->TotalTraslados->Value = $totalesData['totalImpuestosTrasladados'];
-    }
-    if (isset($totalesData['totalImpuestosRetenidos'])) {
-        $electronicDocument->Data->Impuestos->TotalRetenciones->Value = $totalesData['totalImpuestosRetenidos'];
-    }
+    $traslado = $electronicDocument->Data->Impuestos->Traslados->add();
+    $traslado->Base->Value = 2;
+    $traslado->Importe->Value = 0.32;
+    $traslado->Tipo->Value = '002';
+    $traslado->TipoFactor->Value = 'Tasa';
+    $traslado->TasaCuota->Value = 0.160000;
 
-    if (isset($data['impuestosGlobales']['traslados'])) {
-        foreach($data['impuestosGlobales']['traslados'] as $imp) {
-            $trasladoGlobal = $electronicDocument->Data->Impuestos->Traslados->add();
-            $trasladoGlobal->Tipo->Value = $imp['impuesto'];
-            $trasladoGlobal->TipoFactor->Value = $imp['tipoFactor'];
-            $trasladoGlobal->TasaCuota->Value = $imp['tasaCuota'];
-            $trasladoGlobal->Importe->Value = $imp['importe'];
-            if (isset($imp['base'])) {
-                $trasladoGlobal->Base->Value = $imp['base'];
-            }
-        }
-    }
-    // Añadir lógica para retenciones globales si es necesario
+    $electronicDocument->Data->Impuestos->TotalTraslados->Value = 0.32;
+
+    $retencion = $electronicDocument->Data->Impuestos->Retenciones->add();
+    $retencion->Tipo->Value = '002';
+    $retencion->Importe->Value = 0;
+
+    $electronicDocument->Data->Impuestos->TotalRetenciones->Value = 0;
+    
 
     // Llamada al Servicio de Timbrado
     $parameters = new Parameters();
@@ -206,7 +168,7 @@ try {
         echo json_encode([
             'success' => true,
             'uuid' => $parameters->Information->Timbre->Uuid,
-            'xml' => base64_encode($xml)
+            'xml' => $xml
         ]);
     } else {
         $errorDetails = is_string($parameters->Information->Error) ? $parameters->Information->Error : json_encode($parameters->Information->Error, JSON_PRETTY_PRINT);
