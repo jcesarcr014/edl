@@ -180,6 +180,8 @@ try {
     $ecodex = new Proveedor();
     $result = $ecodex->TimbrarCfdi($parameters);
 
+    ob_clean(); 
+    
     if ($result == ProcessProviderResult::OK) {
         $electronicDocument->Manage->Save->Options->Validations = false;
         $electronicDocument->saveToString($xml);
@@ -189,6 +191,8 @@ try {
             'uuid' => $parameters->Information->Timbre->Uuid,
             'xml' => base64_encode($xml)
         ]);
+        exit();
+
     } else {
         $errorDetails = is_string($parameters->Information->Error) ? $parameters->Information->Error : json_encode($parameters->Information->Error, JSON_PRETTY_PRINT);
         throw new Exception('Error del PAC: ' . $errorDetails);
