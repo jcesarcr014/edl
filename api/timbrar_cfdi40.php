@@ -185,11 +185,14 @@ try {
     if ($result == ProcessProviderResult::OK) {
         $electronicDocument->Manage->Save->Options->Validations = false;
         $electronicDocument->saveToString($xml);
+
+        $uuidValue = is_string($parameters->Information->Timbre->Uuid) ? $parameters->Information->Timbre->Uuid : null;
+        $xmlValue = is_string($xml) ? $xml : null;
         http_response_code(200);
         echo json_encode([
             'success' => true,
-            'uuid' => $parameters->Information->Timbre->Uuid,
-            'xml' => base64_encode($xml)
+            'uuid' => $uuidValue,
+            'xml' => base64_encode($xmlValue)
         ]);
         exit();
 
