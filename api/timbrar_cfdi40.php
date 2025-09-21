@@ -174,7 +174,12 @@ try {
     $parameters = new Parameters();
     $parameters->Rfc = Constants::RFC_INTEGRADOR;
     $parameters->Usuario = Constants::ID_INTEGRADOR;
-    $parameters->IdTransaccion = PHP_INT_MAX;
+    if (!isset($data['max_id']) || !is_numeric($data['max_id'])) {
+        $parameters->IdTransaccion = PHP_INT_MAX;
+    } else{
+        $parameters->IdTransaccion = (int)$data['max_id'] + 1;
+    }
+    
     $parameters->ElectronicDocument = $electronicDocument;
 
     $ecodex = new Proveedor();
