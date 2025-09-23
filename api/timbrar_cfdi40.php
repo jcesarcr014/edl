@@ -197,6 +197,7 @@ try {
         echo json_encode([
             'success' => true,
             'uuid' => $uuidValue,
+            'id_transaccion' => $parameters->IdTransaccion,
             'xml' => base64_encode($xmlValue)
         ]);
         exit();
