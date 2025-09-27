@@ -192,6 +192,23 @@ try {
         $electronicDocument->saveToString($xml);
 
         $uuidValue = is_string($parameters->Information->Timbre->Uuid) ? $parameters->Information->Timbre->Uuid : null;
+
+        if (empty($uuidValue) && is_string($xml)) {
+            try {
+                $xmlObj = new SimpleXMLElement($xml);
+                $namespaces = $xmlObj->getNamespaces(true);
+    
+                if (isset($namespaces['tfd'])) {
+                    $tfd = $xmlObj->children($namespaces['cfdi'])->Complemento->children($namespaces['tfd']);
+                    if (isset($tfd->TimbreFiscalDigital)) {
+                        $uuidValue = (string) $tfd->TimbreFiscalDigital['UUID'];
+                    }
+                }
+            } catch (Exception $e) {
+                $uuidValue = null; // si falla la lectura, lo dejamos en null
+            }
+        }
+        
         $xmlValue = is_string($xml) ? $xml : null;
         http_response_code(200);
         echo json_encode([
