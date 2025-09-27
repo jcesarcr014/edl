@@ -191,24 +191,32 @@ try {
         $electronicDocument->Manage->Save->Options->Validations = false;
         $electronicDocument->saveToString($xml);
 
-        $uuidValue = is_string($parameters->Information->Timbre->Uuid) ? $parameters->Information->Timbre->Uuid : null;
+        // Intentamos obtener UUID desde la respuesta del PAC
+        $uuidValue = is_string($parameters->Information->Timbre->Uuid)
+            ? $parameters->Information->Timbre->Uuid
+            : null;
 
+        // Si no lo encontramos en el objeto, lo buscamos en el XML
         if (empty($uuidValue) && is_string($xml)) {
             try {
                 $xmlObj = new SimpleXMLElement($xml);
                 $namespaces = $xmlObj->getNamespaces(true);
-    
+
                 if (isset($namespaces['tfd'])) {
-                    $tfd = $xmlObj->children($namespaces['cfdi'])->Complemento->children($namespaces['tfd']);
-                    if (isset($tfd->TimbreFiscalDigital)) {
-                        $uuidValue = (string) $tfd->TimbreFiscalDigital['UUID'];
+                    // bajamos a <cfdi:Complemento> y buscamos el Timbre
+                    $complemento = $xmlObj->children($namespaces['cfdi'])->Complemento;
+                    if ($complemento) {
+                        $tfd = $complemento->children($namespaces['tfd']);
+                        if (isset($tfd->TimbreFiscalDigital)) {
+                            $uuidValue = (string) $tfd->TimbreFiscalDigital['UUID'];
+                        }
                     }
                 }
             } catch (Exception $e) {
-                $uuidValue = null; // si falla la lectura, lo dejamos en null
+                $uuidValue = null;
             }
         }
-        
+
         $xmlValue = is_string($xml) ? $xml : null;
         http_response_code(200);
         echo json_encode([
