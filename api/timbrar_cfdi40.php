@@ -200,19 +200,21 @@ try {
         if (empty($uuidValue) && is_string($xml)) {
             try {
                 $xmlObj = new SimpleXMLElement($xml);
-                $namespaces = $xmlObj->getNamespaces(true);
+                
+                // 1. Se registran los "prefijos" de los namespaces para que XPath los entienda.
+                $xmlObj->registerXPathNamespace('cfdi', 'http://www.sat.gob.mx/cfd/4');
+                $xmlObj->registerXPathNamespace('tfd', 'http://www.sat.gob.mx/TimbreFiscalDigital');
 
-                if (isset($namespaces['tfd'])) {
-                    // bajamos a <cfdi:Complemento> y buscamos el Timbre
-                    $complemento = $xmlObj->children($namespaces['cfdi'])->Complemento;
-                    if ($complemento) {
-                        $tfd = $complemento->children($namespaces['tfd']);
-                        if (isset($tfd->TimbreFiscalDigital)) {
-                            $uuidValue = (string) $tfd->TimbreFiscalDigital['UUID'];
-                        }
-                    }
+                // 2. Se ejecuta la consulta XPath para ir directamente al atributo UUID.
+                $nodes = $xmlObj->xpath('/cfdi:Comprobante/cfdi:Complemento/tfd:TimbreFiscalDigital/@UUID');
+
+                // 3. Si se encontró el nodo, se extrae su valor.
+                if ($nodes && count($nodes) > 0) {
+                    $uuidValue = (string) $nodes[0];
                 }
+
             } catch (Exception $e) {
+                // Si hay un error al parsear el XML, el UUID permanece nulo.
                 $uuidValue = null;
             }
         }
