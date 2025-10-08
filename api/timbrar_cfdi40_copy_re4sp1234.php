@@ -13,7 +13,6 @@ define('SECRET_API_TOKEN', 'TuTokenSuperSecreto12345!@');
 define('CERT_DIR', __DIR__ . '/../certificados/');
 define('PASSWORD_FILE', __DIR__ . '/../config/passwords.ini');
 
-require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/security.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../ejemplos/Utils/Utils.php'; 
@@ -26,7 +25,6 @@ use Facturando\EDL\Example\Utils\Utils;
 use Facturando\ElectronicDocumentLibrary\Base\Types\ProcessProviderResult;
 use Facturando\ElectronicDocumentLibrary\Certificate\ElectronicCertificate;
 use Facturando\ElectronicDocumentLibrary\Document\ElectronicDocument;
-use Ramsey\Uuid\Uuid; 
 
 // --- VALIDACIÓN ---
 $token = getBearerToken();
@@ -35,15 +33,11 @@ if ($token !== SECRET_API_TOKEN) {
     echo json_encode(['error' => 'Acceso no autorizado.']);
     exit();
 }
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Método no permitido.']);
     exit();
 }
-
-$uuidOperacion = Uuid::uuid4()->toString();
-$respuestaJson = null; 
 
 // --- LÓGICA TIMBRADO ---
 try {
@@ -54,17 +48,10 @@ try {
         throw new Exception('JSON inválido en el cuerpo de la petición.');
     }
 
-    $emisorRfc = $data['emisor']['rfc'] ?? null;
-    $receptorRfc = $data['receptor']['rfc'] ?? null;
-
+    $emisorRfc = $data['emisor']['rfc'];
     if (empty($emisorRfc)) {
         throw new Exception('El RFC del emisor es requerido.');
     }
-
-    $sql = "INSERT INTO peticiones_entrantes (uuid_operacion, rfc_emisor, rfc_receptor, cuerpo_peticion) VALUES (?, ?, ?, ?)";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$uuidOperacion, $emisorRfc, $receptorRfc, $jsonInput]);
-
 
     // Certificados
     $pathCer = CERT_DIR . $emisorRfc . '.cer';
@@ -232,18 +219,15 @@ try {
             }
         }
 
-        $sql = "INSERT INTO cfdi_timbrados (uuid_operacion, uuid_cfdi, rfc_emisor, rfc_receptor, fecha_timbrado, contenido_xml) VALUES (?, ?, ?, ?, NOW(), ?)";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([$uuidOperacion, $uuidValue, $emisorRfc, $receptorRfc, $xml]);
-
         $xmlValue = is_string($xml) ? $xml : null;
         http_response_code(200);
-        $respuestaJson = [
+        echo json_encode([
             'success' => true,
             'uuid' => $uuidValue,
             'id_transaccion' => $parameters->IdTransaccion,
-            'xml' => base64_encode($xml)
-        ];
+            'xml' => base64_encode($xmlValue)
+        ]);
+        exit();
 
     } else {
         $errorDetails = is_string($parameters->Information->Error) ? $parameters->Information->Error : json_encode($parameters->Information->Error, JSON_PRETTY_PRINT);
@@ -252,23 +236,9 @@ try {
 
 } catch (\Exception $e) {
     http_response_code(400);
-    $respuestaJson = [
+    echo json_encode([
         'success' => false,
         'error' => 'Error al procesar la factura.',
         'details' => $e->getMessage()
-    ];
-} finally {
-    $sql = "INSERT INTO respuestas_enviadas (uuid_operacion, fue_exitosa, http_codigo, cuerpo_respuesta, mensaje_error) VALUES (?, ?, ?, ?, ?)";
-    $stmt = $pdo->prepare($sql);
-    
-    $fueExitosa = $respuestaJson['success'] ?? false;
-    $httpCodigo = http_response_code();
-    $cuerpoRespuesta = json_encode($respuestaJson);
-    $mensajeError = !$fueExitosa ? ($respuestaJson['details'] ?? 'Error desconocido') : null;
-
-    $stmt->execute([$uuidOperacion, $fueExitosa, $httpCodigo, $cuerpoRespuesta, $mensajeError]);
-
-    // Enviamos la respuesta final al cliente
-    echo $cuerpoRespuesta;
-    exit();
+    ]);
 }
