@@ -26,7 +26,7 @@ use Facturando\EDL\Example\Utils\Utils;
 use Facturando\ElectronicDocumentLibrary\Base\Types\ProcessProviderResult;
 use Facturando\ElectronicDocumentLibrary\Certificate\ElectronicCertificate;
 use Facturando\ElectronicDocumentLibrary\Document\ElectronicDocument;
-use Ramsey\Uuid\Uuid; 
+
 
 // --- VALIDACIÓN ---
 $token = getBearerToken();
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-$uuidOperacion = Uuid::uuid4()->toString();
+$uuidOperacion = hash('sha256', microtime() . $_SERVER['REMOTE_ADDR'] . random_int(0, PHP_INT_MAX));
 $respuestaJson = null; 
 
 // --- LÓGICA TIMBRADO ---
