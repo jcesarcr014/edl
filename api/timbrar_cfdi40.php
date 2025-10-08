@@ -42,7 +42,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-$uuidOperacion = hash('sha256', microtime() . $_SERVER['REMOTE_ADDR'] . random_int(0, PHP_INT_MAX));
+// Generamos el hash completo de 64 caracteres...
+$hashCompleto = hash('sha256', microtime() . $_SERVER['REMOTE_ADDR'] . random_int(0, PHP_INT_MAX));
+
+// ...y luego lo truncamos a los primeros 36 caracteres para que quepa en la BD.
+$uuidOperacion = substr($hashCompleto, 0, 36);
 $respuestaJson = null; 
 
 // --- LÓGICA TIMBRADO ---
